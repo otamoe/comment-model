@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/globalsign/mgo/bson"
 	authModel "github.com/otamoe/auth-model"
 	"github.com/otamoe/gin-server/errs"
 	"github.com/otamoe/gin-server/utils"
@@ -17,9 +18,9 @@ import (
 
 type (
 	Application struct {
-		ID      string `json:"_id,omitempty"`
-		Secret  string `json:"secret,omitempty"`
-		PushURL string `json:"push_url"`
+		ID      bson.ObjectId `json:"_id,omitempty"`
+		Secret  string        `json:"secret,omitempty"`
+		PushURL string        `json:"push_url"`
 
 		Errors     []*errs.Error `json:"errors,omitempty"`
 		StatusCode int           `json:"status_code,omitempty"`
@@ -27,11 +28,11 @@ type (
 	}
 
 	Post struct {
-		ID      string `json:"_id"`
-		OwnerID string `json:"owner_id"`
-		Secret  string `json:"secret"`
-		URI     string `json:"uri"`
-		Allow   bool   `json:"allow"`
+		ID      bson.ObjectId `json:"_id"`
+		OwnerID bson.ObjectId `json:"owner_id"`
+		Secret  string        `json:"secret"`
+		URI     string        `json:"uri"`
+		Allow   bool          `json:"allow"`
 
 		Errors     []*errs.Error `json:"errors,omitempty"`
 		StatusCode int           `json:"status_code,omitempty"`
@@ -45,9 +46,9 @@ var (
 	defaultApplication *Application
 )
 
-func Config(apiOrigin, postOrigin, pushURL string) {
+func Config(apiOrigin, applicationOrigin, pushURL string) {
 	APIOrigin = apiOrigin
-	ApplicationOrigin = postOrigin
+	ApplicationOrigin = applicationOrigin
 	PushURL = pushURL
 }
 
@@ -69,7 +70,7 @@ func Start() {
 	}
 
 	application = &Application{
-		ID:     token.Extra("application_id").(string),
+		ID:     bson.ObjectIdHex(token.Extra("application_id").(string)),
 		Client: client,
 	}
 
@@ -89,7 +90,7 @@ func Start() {
 func (application *Application) Get() (err error) {
 	var req *http.Request
 	var res *http.Response
-	if req, err = http.NewRequest("GET", ApplicationOrigin+"/"+application.ID+"/", nil); err != nil {
+	if req, err = http.NewRequest("GET", ApplicationOrigin+"/"+application.ID.Hex()+"/", nil); err != nil {
 		return
 	}
 	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), time.Second*20)
@@ -142,7 +143,7 @@ func (application *Application) Update() (err error) {
 		return
 	}
 
-	if req, err = http.NewRequest("POST", ApplicationOrigin+"/"+application.ID+"/", bytes.NewReader(bodyBytes)); err != nil {
+	if req, err = http.NewRequest("POST", ApplicationOrigin+"/"+application.ID.Hex()+"/", bytes.NewReader(bodyBytes)); err != nil {
 		return
 	}
 
@@ -193,9 +194,9 @@ func (post *Post) Save() (err error) {
 		return
 	}
 
-	url := ApplicationOrigin + "/" + defaultApplication.ID + "/post/"
+	url := ApplicationOrigin + "/" + defaultApplication.ID.Hex() + "/post/"
 	if post.ID != "" {
-		url += post.ID + "/"
+		url += post.ID.Hex() + "/"
 	}
 
 	if req, err = http.NewRequest("POST", url, bytes.NewReader(bodyBytes)); err != nil {
@@ -243,7 +244,7 @@ func (post *Post) Get(err error) {
 		return
 	}
 
-	if req, err = http.NewRequest("GET", ApplicationOrigin+"/"+defaultApplication.ID+"/"+post.ID+"/", nil); err != nil {
+	if req, err = http.NewRequest("GET", ApplicationOrigin+"/"+defaultApplication.ID.Hex()+"/"+post.ID.Hex()+"/", nil); err != nil {
 		return
 	}
 
