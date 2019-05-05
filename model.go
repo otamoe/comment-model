@@ -18,9 +18,7 @@ import (
 
 type (
 	Application struct {
-		ID      bson.ObjectId `json:"_id,omitempty"`
-		Secret  string        `json:"secret,omitempty"`
-		PushURL string        `json:"push_url"`
+		ID bson.ObjectId `json:"_id,omitempty"`
 
 		Errors     []*errs.Error `json:"errors,omitempty"`
 		StatusCode int           `json:"status_code,omitempty"`
@@ -42,14 +40,12 @@ type (
 var (
 	APIOrigin          string
 	ApplicationOrigin  string
-	PushURL            string
 	defaultApplication *Application
 )
 
-func Config(apiOrigin, applicationOrigin, pushURL string) {
+func Config(apiOrigin, applicationOrigin string) {
 	APIOrigin = apiOrigin
 	ApplicationOrigin = applicationOrigin
-	PushURL = pushURL
 }
 
 func Start() {
@@ -76,13 +72,6 @@ func Start() {
 
 	if err = application.Get(); err != nil {
 		return
-	}
-
-	if application.PushURL != PushURL {
-		application.PushURL = PushURL
-		if err = application.Update(); err != nil {
-			return
-		}
 	}
 	return
 }
@@ -120,14 +109,6 @@ func (application *Application) Get() (err error) {
 
 	if len(application.Errors) != 0 {
 		err = application.Errors[0]
-		return
-	}
-
-	if application.Secret == "" {
-		err = &errs.Error{
-			Message:    "Secret is empty",
-			StatusCode: res.StatusCode,
-		}
 		return
 	}
 

@@ -10,7 +10,7 @@ import (
 func init() {
 	logrus.SetLevel(logrus.TraceLevel)
 	authModel.Config("http://auth.auth.de:8080", "http://user.auth.de:8080", "5cbc45ef11ca2b6e6c6f139e", "wwwwwww")
-	Config("http://api.comment.de:8110", "http://application.comment.de:8110", "http://qq.com")
+	Config("http://api.comment.de:8110", "http://application.comment.de:8110")
 	Start()
 }
 
